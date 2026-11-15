@@ -99,6 +99,22 @@ public class MainActivity extends Activity {
         Button copy = btn("نسخ النتيجة");
         copy.setBackground(box(0xFF0A0014));
         root.addView(copy, lp(0));
+        Button act = btn("1) تفعيل لوحة المفاتيح");
+        act.setBackground(box(0xFF0A0014));
+        root.addView(act, lp(0));
+        act.setOnClickListener(v -> startActivity(new android.content.Intent(android.provider.Settings.ACTION_INPUT_METHOD_SETTINGS)));
+        Button pick = btn("2) اختيار لوحة المفاتيح");
+        pick.setBackground(box(0xFF0A0014));
+        root.addView(pick, lp(0));
+        pick.setOnClickListener(v -> ((android.view.inputmethod.InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker());
+        key.setText(getSharedPreferences("morse", MODE_PRIVATE).getString("k", ""));
+        key.addTextChangedListener(new android.text.TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
+            public void onTextChanged(CharSequence s, int a, int b, int c) {}
+            public void afterTextChanged(android.text.Editable e) {
+                getSharedPreferences("morse", MODE_PRIVATE).edit().putString("k", e.toString()).apply();
+            }
+        });
 
         bEnc.setOnClickListener(v -> { encrypt = true; refresh(); });
         bDec.setOnClickListener(v -> { encrypt = false; refresh(); });
