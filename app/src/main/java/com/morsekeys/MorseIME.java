@@ -15,7 +15,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 
 public class MorseIME extends InputMethodService {
-    boolean on = false, arabic = true, emoji = false;
+    boolean on = false, arabic = true, emoji = false, clip = false;
     LinearLayout root;
 
     static final String[][] AR_ROWS = {
@@ -70,14 +70,14 @@ public class MorseIME extends InputMethodService {
     @Override public void onStartInputView(EditorInfo info, boolean restarting) {
         super.onStartInputView(info, restarting);
         emoji = false;
-        if (root != null) build();
+        grab(); clip = false; if (root != null) build();
     }
 
     void build() {
         root.setBackgroundColor(Theme.BG[Theme.bg(this)]);
         root.removeAllViews();
         toolbar();
-        if (emoji) { emojiPanel(); return; }
+        if (clip) { clipPanel(); return; } if (emoji) { emojiPanel(); return; }
         numbers();
         letters();
         bottom();
@@ -87,8 +87,8 @@ public class MorseIME extends InputMethodService {
         LinearLayout t = new LinearLayout(this);
         t.addView(key("\u25BC", 1, () -> requestHideSelf(0)));
         t.addView(key("\u2699\uFE0F", 1, this::openApp));
-        t.addView(key("\uD83D\uDE0A", 1, () -> { emoji = !emoji; build(); }));
-        t.addView(key("\uD83D\uDCCB", 1, this::paste));
+        t.addView(key("\uD83D\uDE0A", 1, () -> { emoji = !emoji; clip = false; build(); }));
+        t.addView(key("\uD83D\uDCCB", 1, () -> { clip = !clip; emoji = false; build(); }));
         t.addView(key("\uD83C\uDF10", 1, this::picker));
         t.addView(key(arabic ? "EN" : "\u0639", 1, () -> { arabic = !arabic; build(); }));
         root.addView(t, rowLp(40));
@@ -209,5 +209,78 @@ public class MorseIME extends InputMethodService {
             }
         }
         ic.deleteSurroundingText(1, 0);
+    }
+
+    @Override public void onCreate() {
+        super.onCreate();
+        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cm != null) cm.addPrimaryClipChangedListener(this::grab);
+    }
+
+    void grab() {
+        try {
+            ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cm == null || !cm.hasPrimaryClip()) return;
+            ClipData d = cm.getPrimaryClip();
+            if (d == null || d.getItemCount() == 0) return;
+            CharSequence s = d.getItemAt(0).coerceToText(this);
+            if (s != null) Clips.add(this, s.toString());
+        } catch (Exception e) {
+        }
+    }
+
+    Button small(String label, boolean hi, Runnable a) {
+        Button b = key(label, 1, a);
+        b.setTextSize(15);
+        b.setBackground(Theme.box(this, hi));
+        return b;
+    }
+
+    View clipRow(String full) {
+        int rh = (int) (44 * getResources().getDisplayMetrics().density);
+        LinearLayout row = new LinearLayout(this);
+        String shown = full.replace('\n', ' ');
+        if (shown.length() > 60) shown = shown.substring(0, 60) + "...";
+        Button t = key(shown, 5, () -> raw(full));
+        t.setSingleLine(true);
+        t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        t.setGravity(android.view.Gravity.CENTER_VERTICAL | android.view.Gravity.START);
+        t.setPadding(24, 0, 24, 0);
+        t.setTextSize(15);
+        row.addView(t);
+        row.addView(small("\uD83D\uDCCC", Clips.isPinned(this, full), () -> { Clips.togglePin(this, full); build(); }));
+        row.addView(small("\u270F\uFE0F", false, () -> editClip(full)));
+        row.addView(small("\u274C", false, () -> { Clips.remove(this, full); build(); }));
+        row.setLayoutParams(new LinearLayout.LayoutParams(-1, rh));
+        return row;
+    }
+
+    void editClip(String full) {
+        Intent i = new Intent(this, ClipEditActivity.class);
+        i.putExtra("t", full);
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(i);
+    }
+
+    void clipPanel() {
+        java.util.List<String> items = Clips.all(this);
+        float d = getResources().getDisplayMetrics().density;
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        if (items.isEmpty()) {
+            android.widget.TextView e = new android.widget.TextView(this);
+            e.setText("\u0644\u0627 \u064A\u0648\u062C\u062F \u0634\u064A\u0621");
+            e.setTextColor(0xFF9A9A9A);
+            e.setGravity(android.view.Gravity.CENTER);
+            list.addView(e, new LinearLayout.LayoutParams(-1, (int) (80 * d)));
+        }
+        for (String s : items) list.addView(clipRow(s));
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(list);
+        root.addView(sv, new LinearLayout.LayoutParams(-1, (int) (190 * d)));
+        LinearLayout last = new LinearLayout(this);
+        last.addView(key("ABC", 2, () -> { clip = false; build(); }));
+        last.addView(key("\uD83D\uDDD1", 1, () -> { Clips.clear(this); build(); }));
+        root.addView(last, rowLp(Theme.height(this)));
     }
 }
