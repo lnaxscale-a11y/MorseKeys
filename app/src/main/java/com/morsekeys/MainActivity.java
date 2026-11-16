@@ -20,7 +20,7 @@ public class MainActivity extends Activity {
     boolean encrypt = true, arabic = true;
     TextView stEnabled, stSelected;
     LinearLayout previewBox;
-    SharedPreferences sp;
+    SharedPreferences sp; FrameLayout frame;
 
     static String ar(String s) {
         String from = "AbtvjHxd*rzs$SDTZEgfqklmnhwYyp'}><|&";
@@ -55,7 +55,7 @@ public class MainActivity extends Activity {
         c.setOrientation(LinearLayout.VERTICAL);
         c.setPadding(dp(16), dp(16), dp(16), dp(16));
         GradientDrawable g = new GradientDrawable();
-        g.setColor(0xFF08080C);
+        g.setColor(0xE608080C);
         g.setStroke(2, acc());
         g.setCornerRadius(dp(20));
         c.setBackground(g);
@@ -78,7 +78,7 @@ public class MainActivity extends Activity {
     }
 
     Button btn(String t, boolean filled) {
-        return btn(t, filled ? acc() : 0x00000000, acc(), filled ? Color.BLACK : Color.WHITE);
+        return btn(t, filled ? acc() : 0xCC000000, acc(), filled ? Color.BLACK : Color.WHITE);
     }
 
     EditText edit(String hint, int lines) {
@@ -128,7 +128,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle s) {
         super.onCreate(s);
-        sp = getSharedPreferences("morse", MODE_PRIVATE);
+        sp = getSharedPreferences("morse", MODE_PRIVATE); frame = new FrameLayout(this); frame.addView(new MatrixView(this), new FrameLayout.LayoutParams(-1, -1)); setContentView(frame);
         render();
     }
 
@@ -155,7 +155,7 @@ public class MainActivity extends Activity {
         stSelected = null;
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.BLACK);
+        root.setBackgroundColor(0x00000000);
         root.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
         ScrollView sv = new ScrollView(this);
         LinearLayout page = new LinearLayout(this);
@@ -183,7 +183,7 @@ public class MainActivity extends Activity {
             nav.addView(t, new LinearLayout.LayoutParams(0, -2, 1));
         }
         root.addView(nav, new LinearLayout.LayoutParams(-1, -2));
-        setContentView(root);
+        if (frame.getChildCount() > 1) frame.removeViewAt(1); frame.addView(root, new FrameLayout.LayoutParams(-1, -1));
         updateStatus();
     }
 
