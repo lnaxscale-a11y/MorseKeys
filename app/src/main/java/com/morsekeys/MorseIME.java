@@ -62,3 +62,78 @@ public class MorseIME extends InputMethodService {
         if (root != null) build();
     }
 
+    void build() {
+        root.setBackgroundColor(Theme.BG[Theme.bg(this)]);
+        root.removeAllViews();
+        String[][] rows = arabic ? AR_ROWS : EN_ROWS;
+        for (int i = 0; i < 3; i++) {
+            LinearLayout row = new LinearLayout(this);
+            for (String k : rows[i]) row.addView(key(k, 1, () -> type(k)));
+            if (i == 2) row.addView(key("\u232B", 1.5f, this::back));
+            root.addView(row, rowLp());
+        }
+        LinearLayout last = new LinearLayout(this);
+        String enc = "\u062A\u0634\u0641\u064A\u0631: ";
+        Button bOn = key(on ? enc + "ON" : enc + "OFF", 2, () -> { on = !on; build(); });
+        bOn.setBackground(Theme.box(this, on));
+        last.addView(bOn);
+        last.addView(key(arabic ? "EN" : "\u0639", 1, () -> { arabic = !arabic; build(); }));
+        last.addView(key("\u0645\u0633\u0627\u0641\u0629", 3, this::space));
+        last.addView(key(".", 1, () -> raw(".")));
+        last.addView(key("\u21B5", 1, this::enter));
+        root.addView(last, rowLp());
+    }
+
+    String norm(String c) {
+        switch (c) {
+            case "\u0629": return "\u0647";
+            case "\u0649": return "\u064A";
+            case "\u0624": return "\u0648";
+            case "\u0621": return "\u0627";
+            default: return c;
+        }
+    }
+
+    void type(String c) {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return;
+        if (on) {
+            String m = MorseCodec.encode(norm(c), arabic, Theme.secret(this));
+            if (!m.isEmpty()) { ic.commitText(m + " ", 1); return; }
+        }
+        ic.commitText(c, 1);
+    }
+
+    void raw(String s) {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic != null) ic.commitText(s, 1);
+    }
+
+    void space() {
+        raw(on ? "/ " : " ");
+    }
+
+    void enter() {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return;
+        ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
+        ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER));
+    }
+
+    void back() {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return;
+        if (on) {
+            CharSequence b = ic.getTextBeforeCursor(15, 0);
+            if (b != null && b.length() > 0 && b.charAt(b.length() - 1) == ' ') {
+                String s = b.toString();
+                int end = s.length();
+                int i = end - 1;
+                while (i > 0 && s.charAt(i - 1) != ' ') i--;
+                ic.deleteSurroundingText(end - i, 0);
+                return;
+            }
+        }
+        ic.deleteSurroundingText(1, 0);
+    }
+}
