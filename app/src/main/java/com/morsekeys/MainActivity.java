@@ -2,6 +2,7 @@ package com.morsekeys;
 // PAGES-V2
 
 import android.app.Activity;
+import android.content.ClipboardManager;
 import android.content.*;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -96,8 +97,8 @@ public class MainActivity extends Activity {
         return e;
     }
 
-    TextView pk(String s, float w) {
-        TextView t = tv(s, 15, Color.WHITE);
+    TextView pk(CharSequence s, float w) {
+        TextView t = tv("", 15, Color.WHITE); t.setText(s);
         t.setGravity(Gravity.CENTER);
         t.setBackground(Theme.box(this, false));
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, -1, w);
@@ -112,10 +113,10 @@ public class MainActivity extends Activity {
         box.setBackgroundColor(Theme.BG[Theme.bg(this)]);
         box.setPadding(dp(4), dp(6), dp(4), dp(6));
         box.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
-        int h = dp(Theme.height(this));
+        int h = dp(Theme.height(this)); int n = 0;
         for (String[] r : MorseIME.AR_ROWS) {
             LinearLayout row = new LinearLayout(this);
-            for (String k : r) row.addView(pk(k, 1));
+            for (String k : r) row.addView(pk(Sym.label(k, n++), 1));
             box.addView(row, new LinearLayout.LayoutParams(-1, h));
         }
         LinearLayout last = new LinearLayout(this);
