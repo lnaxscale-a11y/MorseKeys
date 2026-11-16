@@ -70,7 +70,7 @@ public class MainActivity extends Activity {
         b.setTextColor(text);
         GradientDrawable g = new GradientDrawable();
         g.setColor(fill);
-        g.setStroke(3, stroke);
+        g.setStroke(1, 0x00000000);
         g.setCornerRadius(dp(30));
         b.setBackground(g);
         b.setLayoutParams(lp());
@@ -78,7 +78,7 @@ public class MainActivity extends Activity {
     }
 
     Button btn(String t, boolean filled) {
-        return btn(t, filled ? acc() : 0xCC000000, acc(), filled ? Color.BLACK : Color.WHITE);
+        return btn(t, filled ? acc() : 0xCC1C1C22, acc(), filled ? Color.BLACK : Color.WHITE);
     }
 
     EditText edit(String hint, int lines) {
@@ -90,8 +90,8 @@ public class MainActivity extends Activity {
         e.setGravity(Gravity.TOP | Gravity.START);
         e.setPadding(dp(14), dp(14), dp(14), dp(14));
         GradientDrawable g = new GradientDrawable();
-        g.setColor(0xFF0A0A10);
-        g.setStroke(3, acc());
+        g.setColor(0xFF16161E);
+        g.setStroke(1, 0x00000000);
         g.setCornerRadius(dp(18));
         e.setBackground(g);
         return e;
@@ -220,7 +220,7 @@ public class MainActivity extends Activity {
         for (int i = 0; i < NAMES.length; i++) {
             final int idx = i;
             String mark = Theme.theme(this) == i ? "\u2713 " : "";
-            Button b = btn(mark + ar(NAMES[i]), Theme.KEYFILL[i], Theme.ACCENT[i], Color.WHITE);
+            Button b = btn(mark + ar(NAMES[i]), Theme.ACCENT[i], 0x00000000, Color.BLACK);
             b.setOnClickListener(v -> { sp.edit().putInt("theme", idx).apply(); render(); });
             c.addView(b);
         }
