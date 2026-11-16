@@ -1,16 +1,21 @@
 package com.morsekeys;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.inputmethodservice.InputMethodService;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
 public class MorseIME extends InputMethodService {
-    boolean on = false, arabic = true;
+    boolean on = false, arabic = true, emoji = false;
     LinearLayout root;
 
     static final String[][] AR_ROWS = {
@@ -23,9 +28,14 @@ public class MorseIME extends InputMethodService {
         {"a","s","d","f","g","h","j","k","l"},
         {"z","x","c","v","b","n","m"}
     };
+    static final String[] EMOJI = {
+        "\uD83D\uDE00","\uD83D\uDE02","\uD83D\uDE0D","\uD83D\uDE0E","\uD83D\uDE22","\uD83D\uDE21","\uD83D\uDC4D","\uD83D\uDE4F",
+        "\u2764\uFE0F","\uD83D\uDD25","\uD83C\uDF89","\uD83D\uDE18","\uD83D\uDE0A","\uD83E\uDD14","\uD83D\uDE2D","\uD83D\uDE31",
+        "\uD83D\uDC4B","\uD83D\uDC4F","\uD83D\uDCAA","\u2728","\uD83C\uDF39","\u2705","\u274C","\uD83D\uDE34"
+    };
 
-    LinearLayout.LayoutParams rowLp() {
-        int h = (int) (Theme.height(this) * getResources().getDisplayMetrics().density);
+    LinearLayout.LayoutParams rowLp(int dp) {
+        int h = (int) (dp * getResources().getDisplayMetrics().density);
         return new LinearLayout.LayoutParams(-1, h);
     }
 
@@ -59,29 +69,93 @@ public class MorseIME extends InputMethodService {
 
     @Override public void onStartInputView(EditorInfo info, boolean restarting) {
         super.onStartInputView(info, restarting);
+        emoji = false;
         if (root != null) build();
     }
 
     void build() {
         root.setBackgroundColor(Theme.BG[Theme.bg(this)]);
         root.removeAllViews();
+        toolbar();
+        if (emoji) { emojiPanel(); return; }
+        numbers();
+        letters();
+        bottom();
+    }
+
+    void toolbar() {
+        LinearLayout t = new LinearLayout(this);
+        t.addView(key("\u25BC", 1, () -> requestHideSelf(0)));
+        t.addView(key("\u2699\uFE0F", 1, this::openApp));
+        t.addView(key("\uD83D\uDE0A", 1, () -> { emoji = !emoji; build(); }));
+        t.addView(key("\uD83D\uDCCB", 1, this::paste));
+        t.addView(key("\uD83C\uDF10", 1, this::picker));
+        t.addView(key(arabic ? "EN" : "\u0639", 1, () -> { arabic = !arabic; build(); }));
+        root.addView(t, rowLp(40));
+    }
+
+    void numbers() {
+        LinearLayout r = new LinearLayout(this);
+        for (String d : new String[]{"1","2","3","4","5","6","7","8","9","0"}) r.addView(key(d, 1, () -> raw(d)));
+        root.addView(r, rowLp(Theme.height(this)));
+    }
+
+    void letters() {
         String[][] rows = arabic ? AR_ROWS : EN_ROWS;
         for (int i = 0; i < 3; i++) {
             LinearLayout row = new LinearLayout(this);
             for (String k : rows[i]) row.addView(key(k, 1, () -> type(k)));
             if (i == 2) row.addView(key("\u232B", 1.5f, this::back));
-            root.addView(row, rowLp());
+            root.addView(row, rowLp(Theme.height(this)));
         }
+    }
+
+    void bottom() {
         LinearLayout last = new LinearLayout(this);
         String enc = "\u062A\u0634\u0641\u064A\u0631: ";
         Button bOn = key(on ? enc + "ON" : enc + "OFF", 2, () -> { on = !on; build(); });
         bOn.setBackground(Theme.box(this, on));
         last.addView(bOn);
-        last.addView(key(arabic ? "EN" : "\u0639", 1, () -> { arabic = !arabic; build(); }));
-        last.addView(key("\u0645\u0633\u0627\u0641\u0629", 3, this::space));
+        last.addView(key("\u0645\u0633\u0627\u0641\u0629", 4, this::space));
         last.addView(key(".", 1, () -> raw(".")));
         last.addView(key("\u21B5", 1, this::enter));
-        root.addView(last, rowLp());
+        root.addView(last, rowLp(Theme.height(this)));
+    }
+
+    void emojiPanel() {
+        for (int r = 0; r < 3; r++) {
+            LinearLayout row = new LinearLayout(this);
+            for (int c = 0; c < 8; c++) {
+                String e = EMOJI[r * 8 + c];
+                row.addView(key(e, 1, () -> raw(e)));
+            }
+            root.addView(row, rowLp(Theme.height(this)));
+        }
+        LinearLayout last = new LinearLayout(this);
+        last.addView(key("ABC", 2, () -> { emoji = false; build(); }));
+        last.addView(key("\u0645\u0633\u0627\u0641\u0629", 5, () -> raw(" ")));
+        last.addView(key("\u232B", 2, this::back));
+        root.addView(last, rowLp(Theme.height(this)));
+    }
+
+    void openApp() {
+        Intent i = new Intent(this, MainActivity.class);
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(i);
+    }
+
+    void paste() {
+        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cm == null || !cm.hasPrimaryClip()) return;
+        ClipData d = cm.getPrimaryClip();
+        if (d == null || d.getItemCount() == 0) return;
+        CharSequence s = d.getItemAt(0).coerceToText(this);
+        if (s != null) raw(s.toString());
+    }
+
+    void picker() {
+        InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (im != null) im.showInputMethodPicker();
     }
 
     String norm(String c) {
