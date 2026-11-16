@@ -55,8 +55,8 @@ public class MainActivity extends Activity {
         c.setOrientation(LinearLayout.VERTICAL);
         c.setPadding(dp(16), dp(16), dp(16), dp(16));
         GradientDrawable g = new GradientDrawable();
-        g.setColor(0xE608080C);
-        g.setStroke(2, acc());
+        g.setColor(0xCC000000);
+        g.setStroke(1, 0x00000000);
         g.setCornerRadius(dp(20));
         c.setBackground(g);
         return c;
