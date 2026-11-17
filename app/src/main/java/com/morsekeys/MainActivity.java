@@ -157,10 +157,10 @@ public class MainActivity extends Activity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0x00000000);
         root.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-        ScrollView sv = new ScrollView(this);
+        TextView ttl = tv("MorseKeys", 20, acc()); ttl.setGravity(Gravity.CENTER); ttl.setPadding(0, dp(34), 0, dp(6)); ttl.setTypeface(android.graphics.Typeface.DEFAULT_BOLD); root.addView(ttl, new LinearLayout.LayoutParams(-1, -2)); ScrollView sv = new ScrollView(this);
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
-        page.setPadding(dp(14), dp(40), dp(14), dp(14));
+        page.setPadding(dp(14), dp(8), dp(14), dp(14));
         switch (cur) {
             case 0: home(page); break;
             case 1: designs(page); break;
