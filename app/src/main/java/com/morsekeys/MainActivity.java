@@ -128,7 +128,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle s) {
         super.onCreate(s);
-        sp = getSharedPreferences("morse", MODE_PRIVATE); frame = new FrameLayout(this); frame.addView(new MatrixView(this), new FrameLayout.LayoutParams(-1, -1)); setContentView(frame);
+        sp = getSharedPreferences("morse", MODE_PRIVATE); frame = new FrameLayout(this); frame.addView(new MatrixView(this), new FrameLayout.LayoutParams(-1, -1)); getWindow().setStatusBarColor(Color.TRANSPARENT); getWindow().setNavigationBarColor(Color.BLACK); frame.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN); setContentView(frame);
         render();
     }
 
