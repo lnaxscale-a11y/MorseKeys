@@ -116,7 +116,7 @@ public class MainActivity extends Activity {
         int h = dp(Theme.height(this)); int n = 0;
         for (String[] r : MorseIME.AR_ROWS) {
             LinearLayout row = new LinearLayout(this);
-            for (String k : r) row.addView(pk(Sym.label(k, n++), 1));
+            for (String k : r) row.addView(pk(Sym.label(this, k, n++), 1));
             box.addView(row, new LinearLayout.LayoutParams(-1, h));
         }
         LinearLayout last = new LinearLayout(this);

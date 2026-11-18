@@ -104,7 +104,7 @@ public class MorseIME extends InputMethodService {
         int n = 0; String[][] rows = arabic ? AR_ROWS : EN_ROWS;
         for (int i = 0; i < 3; i++) {
             LinearLayout row = new LinearLayout(this);
-            for (String k : rows[i]) row.addView(key(Sym.label(k, n++), 1, () -> type(k)));
+            for (String k : rows[i]) row.addView(key(Sym.label(this, k, n++), 1, () -> type(k)));
             if (i == 2) row.addView(key("\u232B", 1.5f, this::back));
             root.addView(row, rowLp(Theme.height(this)));
         }
