@@ -89,6 +89,7 @@ public class MorseIME extends InputMethodService {
         t.addView(key("\u2699\uFE0F", 1, this::openApp));
         t.addView(key("\uD83D\uDE0A", 1, () -> { emoji = !emoji; clip = false; build(); }));
         t.addView(key("\uD83D\uDCCB", 1, () -> { clip = !clip; emoji = false; build(); }));
+t.addView(key(fk(), 1, this::decode));
         t.addView(key("\uD83C\uDF10", 1, this::picker));
         t.addView(key(arabic ? "EN" : "\u0639", 1, () -> { arabic = !arabic; build(); }));
         root.addView(t, rowLp(40));
@@ -282,5 +283,47 @@ public class MorseIME extends InputMethodService {
         last.addView(key("ABC", 2, () -> { clip = false; build(); }));
         last.addView(key("\uD83D\uDDD1", 1, () -> { Clips.clear(this); build(); }));
         root.addView(last, rowLp(Theme.height(this)));
+    }
+
+    String fk() {
+        return "\u0641\u0643";
+    }
+
+    boolean isMorse(char ch) {
+        return ch == '.' || ch == '-' || ch == '/' || ch == ' ' || ch == '\u2022' || ch == '\u2013' || ch == '\u2014';
+    }
+
+    String clean(String m) {
+        return m.replace('\u2022', '.').replace('\u2013', '-').replace('\u2014', '-');
+    }
+
+    String dec(String m) {
+        String k = Theme.secret(this);
+        String o = MorseCodec.decode(clean(m), arabic, k);
+        if (o.isEmpty()) o = MorseCodec.decode(clean(m), !arabic, k);
+        return o;
+    }
+
+    void decode() {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return;
+        CharSequence sel = ic.getSelectedText(0);
+        if (sel != null && sel.length() > 0) {
+            String o = dec(sel.toString());
+            if (!o.isEmpty()) ic.commitText(o, 1);
+            return;
+        }
+        CharSequence b = ic.getTextBeforeCursor(500, 0);
+        if (b == null || b.length() == 0) return;
+        String s = b.toString();
+        int end = s.length();
+        int i = end;
+        while (i > 0 && isMorse(s.charAt(i - 1))) i--;
+        while (i < end && s.charAt(i) == ' ') i++;
+        if (end - i < 2) return;
+        String res = dec(s.substring(i, end));
+        if (res.isEmpty()) return;
+        ic.deleteSurroundingText(end - i, 0);
+        ic.commitText(res, 1);
     }
 }
