@@ -15,7 +15,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 
 public class MorseIME extends InputMethodService {
-    boolean on = false, arabic = true, emoji = false, clip = false;
+    boolean on = false, arabic = true, emoji = false, clip = false, sym = false;
     LinearLayout root;
 
     static final String[][] AR_ROWS = {
@@ -70,14 +70,14 @@ public class MorseIME extends InputMethodService {
     @Override public void onStartInputView(EditorInfo info, boolean restarting) {
         super.onStartInputView(info, restarting);
         emoji = false;
-        grab(); clip = false; if (root != null) build();
+        grab(); clip = false; sym = false; if (root != null) build();
     }
 
     void build() {
         root.setBackgroundColor(Theme.BG[Theme.bg(this)]);
         root.removeAllViews();
         toolbar();
-        if (clip) { clipPanel(); return; } if (emoji) { emojiPanel(); return; }
+        if (sym) { symPanel(); return; } if (clip) { clipPanel(); return; } if (emoji) { emojiPanel(); return; }
         numbers();
         letters();
         bottom();
@@ -87,9 +87,10 @@ public class MorseIME extends InputMethodService {
         LinearLayout t = new LinearLayout(this);
         t.addView(key("\u25BC", 1, () -> requestHideSelf(0)));
         t.addView(key("\u2699\uFE0F", 1, this::openApp));
-        t.addView(key("\uD83D\uDE0A", 1, () -> { emoji = !emoji; clip = false; build(); }));
-        t.addView(key("\uD83D\uDCCB", 1, () -> { clip = !clip; emoji = false; build(); }));
+        t.addView(key("\uD83D\uDE0A", 1, () -> { emoji = !emoji; clip = false; sym = false; build(); }));
+        t.addView(key("\uD83D\uDCCB", 1, () -> { clip = !clip; emoji = false; sym = false; build(); }));
 t.addView(key(fk(), 1, this::decode));
+t.addView(symBtn());
         t.addView(key("\uD83C\uDF10", 1, this::picker));
         t.addView(key(arabic ? "EN" : "\u0639", 1, () -> { arabic = !arabic; build(); }));
         root.addView(t, rowLp(40));
@@ -325,5 +326,47 @@ t.addView(key(fk(), 1, this::decode));
         if (res.isEmpty()) return;
         ic.deleteSurroundingText(end - i, 0);
         ic.commitText(res, 1);
+    }
+
+    Button symBtn() {
+        Button b = key("@!\u061F", 1, () -> { sym = !sym; clip = false; emoji = false; build(); });
+        b.setTextSize(14);
+        b.setBackground(Theme.box(this, sym));
+        return b;
+    }
+
+    void dpad(int code) {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return;
+        ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, code));
+        ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, code));
+    }
+
+    void symPanel() {
+        String[][] rows = {
+            {"1","2","3","4","5","6","7","8","9","0"},
+            {"@","#","$","%","&","-","+","(",")","/"},
+            {"*","\"","'",":",";","!","\u061F","\u060C","_","=","~"},
+            {"<",">","[","]","{","}","|","^","`","\\"}
+        };
+        for (int i = 0; i < rows.length; i++) {
+            LinearLayout row = new LinearLayout(this);
+            for (String k : rows[i]) row.addView(key(k, 1, () -> raw(k)));
+            if (i == 3) row.addView(key("\u232B", 1.5f, this::back));
+            root.addView(row, rowLp(Theme.height(this)));
+        }
+        LinearLayout last = new LinearLayout(this);
+        last.addView(key("\u0623\u0628\u062C", 2, () -> { sym = false; build(); }));
+        last.addView(key("\u060C", 1, () -> raw("\u060C")));
+        last.addView(key("\u0645\u0633\u0627\u0641\u0629", 4, () -> raw(" ")));
+        last.addView(key(".", 1, () -> raw(".")));
+        last.addView(key("\u21B5", 1, this::enter));
+        root.addView(last, rowLp(Theme.height(this)));
+        LinearLayout arr = new LinearLayout(this);
+        arr.addView(key("\u25B2", 1, () -> dpad(KeyEvent.KEYCODE_DPAD_UP)));
+        arr.addView(key("\u25BC", 1, () -> dpad(KeyEvent.KEYCODE_DPAD_DOWN)));
+        arr.addView(key("\u25C4", 1, () -> dpad(KeyEvent.KEYCODE_DPAD_LEFT)));
+        arr.addView(key("\u25BA", 1, () -> dpad(KeyEvent.KEYCODE_DPAD_RIGHT)));
+        root.addView(arr, rowLp(40));
     }
 }
