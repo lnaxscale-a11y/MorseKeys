@@ -14,7 +14,7 @@ import android.view.inputmethod.*;
 import android.widget.*;
 
 public class MainActivity extends Activity {
-    static final String[] NAMES = {"bnfsjy", ">xDr", ">zrq", ">Hmr", "*hby"};
+    static final String[] NAMES = {">Hmr gAmq", ">xDr gAmq", "fDy gAmq", ">swd gAmq"};
     static final String[] BGN = {">swd", "kHly", ">xDr gAmq", "rmAdy", "bny"};
     int cur = 0;
     boolean encrypt = true, arabic = true;
@@ -78,7 +78,7 @@ public class MainActivity extends Activity {
     }
 
     Button btn(String t, boolean filled) {
-        return btn(t, filled ? acc() : 0xCC1C1C22, acc(), filled ? Color.BLACK : Color.WHITE);
+        return btn(t, filled ? acc() : 0xCC1C1C22, acc(), Color.WHITE);
     }
 
     EditText edit(String hint, int lines) {
@@ -220,7 +220,7 @@ public class MainActivity extends Activity {
         for (int i = 0; i < NAMES.length; i++) {
             final int idx = i;
             String mark = Theme.theme(this) == i ? "\u2713 " : "";
-            Button b = btn(mark + ar(NAMES[i]), Theme.ACCENT[i], 0x00000000, Color.BLACK);
+            Button b = btn(mark + ar(NAMES[i]), Theme.ACCENT[i], 0x00000000, Color.WHITE);
             b.setOnClickListener(v -> { sp.edit().putInt("theme", idx).apply(); render(); });
             c.addView(b);
         }
